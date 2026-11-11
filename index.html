@@ -14,6 +14,24 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,800;1,900&display=swap">
 <style>
+html{background:var(--bg)}
+body{background:transparent;position:relative}
+body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:
+    radial-gradient(520px 420px at 92% 4%, rgba(43,255,107,.22), transparent 70%),
+    radial-gradient(620px 520px at -6% 46%, rgba(43,255,107,.13), transparent 70%),
+    radial-gradient(560px 460px at 100% 92%, rgba(0,200,120,.12), transparent 70%),
+    linear-gradient(115deg, transparent 0 46%, rgba(43,255,107,.045) 46% 47.2%, transparent 47.2% 100%),
+    linear-gradient(115deg, transparent 0 62%, rgba(43,255,107,.035) 62% 62.8%, transparent 62.8% 100%),
+    linear-gradient(rgba(43,255,107,.045) 1px, transparent 1px) 0 0/44px 44px,
+    linear-gradient(90deg, rgba(43,255,107,.045) 1px, transparent 1px) 0 0/44px 44px,
+    var(--bg);
+  -webkit-mask-image:none}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22260%22%20height%3D%22280%22%3E%3Cpath%20d%3D%22M40%2036%20Q40%2050%2054%2050%20Q40%2050%2040%2064%20Q40%2050%2026%2050%20Q40%2050%2040%2036Z%22%20fill%3D%22%232BFF6B%22%20fill-opacity%3D%220.55%22/%3E%3Cpath%20d%3D%22M170%2023%20Q170%2030%20177%2030%20Q170%2030%20170%2037%20Q170%2030%20163%2030%20Q170%2030%20170%2023Z%22%20fill%3D%22%232BFF6B%22%20fill-opacity%3D%220.4%22/%3E%3Cpath%20d%3D%22M120%20132%20Q120%20150%20138%20150%20Q120%20150%20120%20168%20Q120%20150%20102%20150%20Q120%20150%20120%20132Z%22%20fill%3D%22%232BFF6B%22%20fill-opacity%3D%220.5%22/%3E%3Cpath%20d%3D%22M215%20196%20Q215%20205%20224%20205%20Q215%20205%20215%20214%20Q215%20205%20206%20205%20Q215%20205%20215%20196Z%22%20fill%3D%22%232BFF6B%22%20fill-opacity%3D%220.45%22/%3E%3Cpath%20d%3D%22M30%20192%20Q30%20200%2038%20200%20Q30%20200%2030%20208%20Q30%20200%2022%20200%20Q30%20200%2030%20192Z%22%20fill%3D%22%232BFF6B%22%20fill-opacity%3D%220.35%22/%3E%3Ccircle%20cx%3D%2290%22%20cy%3D%2290%22%20r%3D%221.4%22%20fill%3D%22%23fff%22%20fill-opacity%3D%22.35%22/%3E%3Ccircle%20cx%3D%22200%22%20cy%3D%22110%22%20r%3D%221.4%22%20fill%3D%22%23fff%22%20fill-opacity%3D%22.35%22/%3E%3Ccircle%20cx%3D%2270%22%20cy%3D%22250%22%20r%3D%221.4%22%20fill%3D%22%23fff%22%20fill-opacity%3D%22.35%22/%3E%3Ccircle%20cx%3D%22250%22%20cy%3D%2260%22%20r%3D%221.4%22%20fill%3D%22%23fff%22%20fill-opacity%3D%22.35%22/%3E%3Ccircle%20cx%3D%22150%22%20cy%3D%22235%22%20r%3D%221.4%22%20fill%3D%22%23fff%22%20fill-opacity%3D%22.35%22/%3E%3Ccircle%20cx%3D%2210%22%20cy%3D%22120%22%20r%3D%221.4%22%20fill%3D%22%23fff%22%20fill-opacity%3D%22.35%22/%3E%3C/svg%3E") 0 0/260px 280px, url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22300%22%20height%3D%22260%22%3E%3Cpath%20d%3D%22M80%20188%20Q80%20200%2092%20200%20Q80%20200%2080%20212%20Q80%20200%2068%20200%20Q80%20200%2080%20188Z%22%20fill%3D%22%232BFF6B%22%20fill-opacity%3D%220.6%22/%3E%3Cpath%20d%3D%22M230%2074%20Q230%2090%20246%2090%20Q230%2090%20230%20106%20Q230%2090%20214%2090%20Q230%2090%20230%2074Z%22%20fill%3D%22%232BFF6B%22%20fill-opacity%3D%220.55%22/%3E%3Cpath%20d%3D%22M150%2032%20Q150%2040%20158%2040%20Q150%2040%20150%2048%20Q150%2040%20142%2040%20Q150%2040%20150%2032Z%22%20fill%3D%22%232BFF6B%22%20fill-opacity%3D%220.4%22/%3E%3Cpath%20d%3D%22M20%20100%20Q20%20110%2030%20110%20Q20%20110%2020%20120%20Q20%20110%2010%20110%20Q20%20110%2020%20100Z%22%20fill%3D%22%232BFF6B%22%20fill-opacity%3D%220.5%22/%3E%3C/svg%3E") 40px 90px/300px 260px;
+  opacity:.5;animation:brilho 6s ease-in-out infinite alternate}
+@keyframes brilho{from{opacity:.28}to{opacity:.7}}
+@media (prefers-reduced-motion:reduce){body::after{animation:none}}
 /* Conceito: vitrine escura com neon verde da marca; fotos grandes, preço de atacado ao vivo, carrinho fixo no rodapé */
 :root{
   --bg:#050606; --bg2:#0a0d0b; --card:#0d120f; --card2:#121915;
@@ -25,11 +43,6 @@
 *{box-sizing:border-box;margin:0}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 body{
-  background:
-    radial-gradient(700px 480px at 100% 0%, rgba(43,255,107,.16), transparent 70%),
-    radial-gradient(700px 520px at 0% 40%, rgba(43,255,107,.09), transparent 70%),
-    var(--bg);
-  background-attachment:fixed;
   color:var(--fg);font:500 15px/1.45 var(--font);
   padding-left:max(16px,env(safe-area-inset-left,0px));
   padding-right:max(16px,env(safe-area-inset-right,0px));
