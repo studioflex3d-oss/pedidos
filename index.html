@@ -322,9 +322,14 @@ summary{cursor:pointer;font-weight:700;font-size:13.5px;color:var(--mute)}
     </div>
     <div class="fr"><span id="frText"></span><div class="bar"><i id="frBar"></i></div></div>
     <div class="fields">
-      <div class="full"><label for="fName">Nome completo *</label><input class="fld" id="fName" autocomplete="name" placeholder="Nome e sobrenome"></div>
-      <div><label for="fCpf">CPF *</label><input class="fld" id="fCpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14"></div>
-      <div><label for="fCep">CEP *</label><input class="fld" id="fCep" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" maxlength="9"></div>
+      <div class="full"><label for="fName" id="lName">Nome completo *</label><input class="fld" id="fName" autocomplete="name" placeholder="Nome e sobrenome"></div>
+      <div class="full"><label id="lDoc">Documento *</label>
+        <div class="pag" id="fDocTipo" role="radiogroup" aria-labelledby="lDoc">
+          <label class="op"><input type="radio" name="doc" value="CPF"><span>CPF</span></label>
+          <label class="op"><input type="radio" name="doc" value="CNPJ"><span>CNPJ</span></label>
+        </div></div>
+      <div class="full"><label for="fCpf" id="lCpf">CPF *</label><input class="fld" id="fCpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="18"></div>
+      <div class="full"><label for="fCep">CEP *</label><input class="fld" id="fCep" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" maxlength="9"></div>
       <div class="full" id="frEst" hidden style="font-size:.9rem;line-height:1.4"></div>
       <div class="full"><label for="fRua">Endereço (rua, avenida...) *</label><input class="fld" id="fRua" autocomplete="address-line1" placeholder="Nome da rua"></div>
       <div><label for="fNumero">Número *</label><input class="fld" id="fNumero" autocomplete="off" placeholder="Ex.: 123 ou S/N"></div>
@@ -416,7 +421,7 @@ const chCom = one('chav_com', 'Chaveiro com argola', '', 6.90, [[50, 5.90], [100
 const chSem = one('chav_sem', 'Chaveiro sem argola', '', 5.90, [[50, 4.90], [100, 3.90]], null, { nophoto: true });
 
 // ---------- estado ----------
-const Q = {}; const F = { name: '', cpf: '', cep: '', rua: '', numero: '', bairro: '', cidade: '', uf: '', ref: '', obs: '', note: '', pag: '', notes: {} };
+const Q = {}; const F = { name: '', doc: 'CPF', cpf: '', cep: '', rua: '', numero: '', bairro: '', cidade: '', uf: '', ref: '', obs: '', note: '', pag: '', notes: {} };
 const STORE = 'sf3d_pedido_v1';
 const byKey = {}; L.forEach(l => l.items.forEach(i => { byKey[i.key] = { l, i }; Q[i.key] = 0; }));
 try { const s = JSON.parse(localStorage.getItem(STORE) || 'null'); if (s) { for (const k in s.q || {}) if (k in Q) Q[k] = Math.max(0, Math.min(999, s.q[k] | 0)); Object.assign(F, s.f || {}); if (!F.notes || typeof F.notes !== 'object') F.notes = {}; } } catch (e) {}
@@ -429,14 +434,31 @@ function cpfOk(c) {
   for (const n of [9, 10]) { let sum = 0; for (let i = 0; i < n; i++) sum += +d[i] * (n + 1 - i); const dv = (sum * 10) % 11 % 10; if (dv !== +d[n]) return false; }
   return true;
 }
+function cnpjOk(c) {
+  const d = (c || '').replace(/\D/g, '');
+  if (d.length !== 14 || /^(\d)\1+$/.test(d)) return false;
+  for (const n of [12, 13]) { let sum = 0, p = n - 7; for (let i = 0; i < n; i++) { sum += +d[i] * p--; if (p < 2) p = 9; } const dv = sum % 11 < 2 ? 0 : 11 - (sum % 11); if (dv !== +d[n]) return false; }
+  return true;
+}
+const maskDoc = (v, tipo) => {
+  const d = v.replace(/\D/g, '');
+  if (tipo === 'CNPJ') return d.slice(0, 14).replace(/(\d{2})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1/$2').replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+  return d.slice(0, 11).replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+};
+function ajustaDoc() {
+  const c = F.doc === 'CNPJ'; $('#lCpf').textContent = F.doc + ' *';
+  $('#fCpf').placeholder = c ? '00.000.000/0000-00' : '000.000.000-00';
+  $('#lName').textContent = c ? 'Nome do responsável / razão social *' : 'Nome completo *';
+  $$('input[name=doc]').forEach(r => r.checked = F.doc === r.value);
+}
 function faltando() {
   const out = [];
   CAMPOS.forEach(([id, k, nome]) => {
     const v = (F[k] || '').trim(); let bad = !v;
-    if (v && k === 'cpf') bad = !cpfOk(v);
+    if (v && k === 'cpf') bad = F.doc === 'CNPJ' ? !cnpjOk(v) : !cpfOk(v);
     if (v && k === 'cep') bad = v.replace(/\D/g, '').length !== 8;
-    if (v && k === 'name') bad = v.split(/\s+/).length < 2;
-    if (bad) out.push({ id, nome: k === 'cpf' && v ? 'CPF válido' : k === 'cep' && v ? 'CEP com 8 números' : k === 'name' && v ? 'Nome e sobrenome' : nome });
+    if (v && k === 'name') bad = F.doc !== 'CNPJ' && v.split(/\s+/).length < 2;
+    if (bad) out.push({ id, nome: k === 'cpf' && v ? F.doc + ' válido' : k === 'cep' && v ? 'CEP com 8 números' : k === 'name' && v ? 'Nome e sobrenome' : nome });
   });
   if (!F.pag) out.push({ id: 'fPag', nome: 'Forma de pagamento' });
   return out;
@@ -540,7 +562,7 @@ function buildMessage() {
   out.push('*Pedido · Studio Flex 3D (catálogo K-POP)*');
   out.push('*Dados do cliente*');
   out.push('Nome: ' + F.name.trim());
-  out.push('CPF: ' + F.cpf.trim());
+  out.push(F.doc + ': ' + F.cpf.trim());
   out.push(`Endereço: ${F.rua.trim()}, ${F.numero.trim()} · ${F.bairro.trim()}`);
   out.push(`${F.cidade.trim()}/${F.uf} · CEP ${F.cep.trim()}`);
   out.push('Referência: ' + F.ref.trim());
@@ -615,7 +637,7 @@ const syncMsg = () => { showFrete(totals().total); const m = buildMessage(); $('
 $('#chavNote').addEventListener('input', e => { F.note = e.target.value; save(); });
 document.addEventListener('input', e => { const t = e.target; if (t.matches('[data-vnote]')) { F.notes[t.dataset.vnote] = t.value; save(); } });
 [...CAMPOS.map(([id, k]) => [id, k]), ['fObs', 'obs']].forEach(([id, k]) => $('#' + id).addEventListener('input', e => {
-  if (k === 'cpf') { const d = e.target.value.replace(/\D/g, '').slice(0, 11); e.target.value = d.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2'); }
+  if (k === 'cpf') e.target.value = maskDoc(e.target.value, F.doc);
   if (k === 'cep') { const d = e.target.value.replace(/\D/g, '').slice(0, 8); e.target.value = d.length > 5 ? d.slice(0, 5) + '-' + d.slice(5) : d; }
   F[k] = e.target.value;
   if (k === 'cep') { const f = freteInfo(F.cep); if (f && f.uf) { F.uf = f.uf; $('#fUf').value = f.uf; } }
@@ -637,6 +659,11 @@ function bloqueia(e) {
   return false;
 }
 $$('input[name=pag]').forEach(r => { r.checked = F.pag === r.value; r.addEventListener('change', () => { F.pag = r.value; save(); syncMsg(); if (tentou) mostrarFalta(); }); });
+if (F.doc !== 'CNPJ') F.doc = 'CPF';
+ajustaDoc();
+$$('input[name=doc]').forEach(r => r.addEventListener('change', () => {
+  F.doc = r.value; F.cpf = ''; $('#fCpf').value = ''; ajustaDoc(); save(); syncMsg(); if (tentou) mostrarFalta();
+}));
 $('#wa').addEventListener('click', bloqueia, true);
 $('#copy').addEventListener('click', bloqueia, true);
 $('#copy').addEventListener('click', () => {
