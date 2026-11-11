@@ -160,6 +160,15 @@ textarea:focus,.fld:focus{outline:2px solid var(--neon);outline-offset:1px}
 .fld.erro{border-color:#ff5252;outline:2px solid #ff5252}
 .falta{margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(255,82,82,.1);border:1px solid #ff5252;font-size:13.5px;line-height:1.45;color:#ffb4ab}
 select.fld{appearance:auto;color:#fff}
+.pag{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pag .op{margin:0;cursor:pointer}
+.pag input{position:absolute;opacity:0;pointer-events:none}
+.pag span{display:flex;align-items:center;justify-content:center;gap:10px;padding:13px;border-radius:12px;border:1.5px solid var(--line);background:#050806;font-weight:800;font-size:16px;color:#fff}
+.pag span::before{content:"";width:20px;height:20px;border-radius:50%;border:2px solid var(--neon);box-sizing:border-box;flex:none}
+.pag input:checked+span{background:var(--neon);color:var(--neon-ink);border-color:var(--neon)}
+.pag input:checked+span::before{border-color:var(--neon-ink);background:radial-gradient(circle,var(--neon-ink) 0 45%,transparent 50%)}
+.pag input:focus-visible+span{outline:2px solid #fff;outline-offset:2px}
+.pag.erro span{border-color:#ff5252}
 footer{margin-top:40px;padding-top:18px;border-top:1px solid rgba(43,255,107,.2);color:var(--mute);font-size:13px;text-align:center}
 
 /* barra do pedido */
@@ -323,6 +332,11 @@ summary{cursor:pointer;font-weight:700;font-size:13.5px;color:var(--mute)}
       <div><label for="fCidade">Cidade *</label><input class="fld" id="fCidade" autocomplete="address-level2" placeholder="Cidade"></div>
       <div><label for="fUf">Estado *</label><select class="fld" id="fUf"><option value="">Selecione</option><option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option><option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option><option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option><option>SE</option><option>TO</option></select></div>
       <div class="full"><label for="fRef">Ponto de referência *</label><input class="fld" id="fRef" autocomplete="off" placeholder="Ex.: próximo à padaria, casa azul, apto 302"></div>
+      <div class="full"><label id="lPag">Forma de pagamento *</label>
+        <div class="pag" id="fPag" role="radiogroup" aria-labelledby="lPag">
+          <label class="op"><input type="radio" name="pag" value="Pix"><span>Pix</span></label>
+          <label class="op"><input type="radio" name="pag" value="Cartão"><span>Cartão</span></label>
+        </div></div>
       <div class="full"><label for="fObs">Observações</label><textarea id="fObs" placeholder="Algum detalhe do pedido?"></textarea></div>
     </div>
     <div class="acts">
@@ -402,7 +416,7 @@ const chCom = one('chav_com', 'Chaveiro com argola', '', 6.90, [[50, 5.90], [100
 const chSem = one('chav_sem', 'Chaveiro sem argola', '', 5.90, [[50, 4.90], [100, 3.90]], null, { nophoto: true });
 
 // ---------- estado ----------
-const Q = {}; const F = { name: '', cpf: '', cep: '', rua: '', numero: '', bairro: '', cidade: '', uf: '', ref: '', obs: '', note: '', notes: {} };
+const Q = {}; const F = { name: '', cpf: '', cep: '', rua: '', numero: '', bairro: '', cidade: '', uf: '', ref: '', obs: '', note: '', pag: '', notes: {} };
 const STORE = 'sf3d_pedido_v1';
 const byKey = {}; L.forEach(l => l.items.forEach(i => { byKey[i.key] = { l, i }; Q[i.key] = 0; }));
 try { const s = JSON.parse(localStorage.getItem(STORE) || 'null'); if (s) { for (const k in s.q || {}) if (k in Q) Q[k] = Math.max(0, Math.min(999, s.q[k] | 0)); Object.assign(F, s.f || {}); if (!F.notes || typeof F.notes !== 'object') F.notes = {}; } } catch (e) {}
@@ -424,6 +438,7 @@ function faltando() {
     if (v && k === 'name') bad = v.split(/\s+/).length < 2;
     if (bad) out.push({ id, nome: k === 'cpf' && v ? 'CPF válido' : k === 'cep' && v ? 'CEP com 8 números' : k === 'name' && v ? 'Nome e sobrenome' : nome });
   });
+  if (!F.pag) out.push({ id: 'fPag', nome: 'Forma de pagamento' });
   return out;
 }
 const brl = n => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -529,6 +544,7 @@ function buildMessage() {
   out.push(`Endereço: ${F.rua.trim()}, ${F.numero.trim()} · ${F.bairro.trim()}`);
   out.push(`${F.cidade.trim()}/${F.uf} · CEP ${F.cep.trim()}`);
   out.push('Referência: ' + F.ref.trim());
+  out.push('Pagamento: ' + F.pag);
   out.push('');
   g.forEach(({ l, q, p, items }) => {
     out.push(`*${l.title}* · ${q} un × R$ ${num(p)} = R$ ${num(q * p)}`);
@@ -610,7 +626,7 @@ $('#dClose').addEventListener('click', closeCart); $('#shade').addEventListener(
 let tentou = false;
 function mostrarFalta() {
   const f = faltando(), box = $('#falta');
-  CAMPOS.forEach(([id]) => $('#' + id).classList.toggle('erro', f.some(x => x.id === id)));
+  [...CAMPOS.map(c => c[0]), 'fPag'].forEach(id => $('#' + id).classList.toggle('erro', f.some(x => x.id === id)));
   box.hidden = !f.length;
   box.textContent = f.length ? 'Para enviar o pedido, falta preencher: ' + f.map(x => x.nome).join(', ') + '.' : '';
   return f;
@@ -620,6 +636,7 @@ function bloqueia(e) {
   if (f.length) { e.preventDefault(); e.stopImmediatePropagation(); const el = $('#' + f[0].id); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.focus({ preventScroll: true }); return true; }
   return false;
 }
+$$('input[name=pag]').forEach(r => { r.checked = F.pag === r.value; r.addEventListener('change', () => { F.pag = r.value; save(); syncMsg(); if (tentou) mostrarFalta(); }); });
 $('#wa').addEventListener('click', bloqueia, true);
 $('#copy').addEventListener('click', bloqueia, true);
 $('#copy').addEventListener('click', () => {
