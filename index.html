@@ -1,4 +1,14 @@
 <title>Catálogo K-POP Studio Flex 3D</title>
+<meta name="description" content="Escolha seus itens K-POP em 3D, veja o preço de atacado e o frete estimado, e envie o pedido pelo WhatsApp.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="Studio Flex 3D">
+<meta property="og:title" content="Catálogo K-POP · Studio Flex 3D">
+<meta property="og:description" content="Monte seu pedido, veja o preço de atacado e o frete estimado, e envie pelo WhatsApp.">
+<meta property="og:image" content="https://studioflex3d-oss.github.io/pedidos/preview.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -146,6 +156,10 @@ textarea:focus,.fld:focus{outline:2px solid var(--neon);outline-offset:1px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:14px 20px;border-radius:14px;border:1.5px solid var(--neon);background:rgba(43,255,107,.09);font-weight:900;font-size:15px;text-decoration:none;cursor:pointer;touch-action:manipulation}
 .btn.solid{background:var(--neon);color:var(--neon-ink);box-shadow:0 0 22px rgba(43,255,107,.45)}
 .btn[aria-disabled="true"]{opacity:.45;pointer-events:none}
+.btn.incompleto{opacity:.55}
+.fld.erro{border-color:#ff5252;outline:2px solid #ff5252}
+.falta{margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(255,82,82,.1);border:1px solid #ff5252;font-size:13.5px;line-height:1.45;color:#ffb4ab}
+select.fld{appearance:auto;color:#fff}
 footer{margin-top:40px;padding-top:18px;border-top:1px solid rgba(43,255,107,.2);color:var(--mute);font-size:13px;text-align:center}
 
 /* barra do pedido */
@@ -299,15 +313,23 @@ summary{cursor:pointer;font-weight:700;font-size:13.5px;color:var(--mute)}
     </div>
     <div class="fr"><span id="frText"></span><div class="bar"><i id="frBar"></i></div></div>
     <div class="fields">
-      <div><label for="fName">Seu nome</label><input class="fld" id="fName" autocomplete="name" placeholder="Como podemos te chamar?"></div>
-      <div><label for="fCep">CEP para o frete</label><input class="fld" id="fCep" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000"></div>
+      <div class="full"><label for="fName">Nome completo *</label><input class="fld" id="fName" autocomplete="name" placeholder="Nome e sobrenome"></div>
+      <div><label for="fCpf">CPF *</label><input class="fld" id="fCpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14"></div>
+      <div><label for="fCep">CEP *</label><input class="fld" id="fCep" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" maxlength="9"></div>
       <div class="full" id="frEst" hidden style="font-size:.9rem;line-height:1.4"></div>
+      <div class="full"><label for="fRua">Endereço (rua, avenida...) *</label><input class="fld" id="fRua" autocomplete="address-line1" placeholder="Nome da rua"></div>
+      <div><label for="fNumero">Número *</label><input class="fld" id="fNumero" autocomplete="off" placeholder="Ex.: 123 ou S/N"></div>
+      <div><label for="fBairro">Bairro *</label><input class="fld" id="fBairro" autocomplete="off" placeholder="Bairro"></div>
+      <div><label for="fCidade">Cidade *</label><input class="fld" id="fCidade" autocomplete="address-level2" placeholder="Cidade"></div>
+      <div><label for="fUf">Estado *</label><select class="fld" id="fUf"><option value="">Selecione</option><option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option><option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option><option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option><option>SE</option><option>TO</option></select></div>
+      <div class="full"><label for="fRef">Ponto de referência *</label><input class="fld" id="fRef" autocomplete="off" placeholder="Ex.: próximo à padaria, casa azul, apto 302"></div>
       <div class="full"><label for="fObs">Observações</label><textarea id="fObs" placeholder="Algum detalhe do pedido?"></textarea></div>
     </div>
     <div class="acts">
       <a class="btn solid" id="wa" href="#" target="_blank" rel="noopener">Enviar pedido no WhatsApp</a>
       <button type="button" class="btn" id="copy">Copiar pedido</button>
     </div>
+    <div class="falta" id="falta" hidden role="alert"></div>
     <p class="wa-help">Se o WhatsApp não abrir, toque em <b>Copiar pedido</b> e cole na conversa com a loja: <b>(21) 97437-2030</b>.</p>
     <details><summary>Ver a mensagem que será enviada</summary><textarea id="msg" readonly></textarea></details>
     <button type="button" class="mini" id="clear">Limpar pedido</button>
@@ -380,12 +402,30 @@ const chCom = one('chav_com', 'Chaveiro com argola', '', 6.90, [[50, 5.90], [100
 const chSem = one('chav_sem', 'Chaveiro sem argola', '', 5.90, [[50, 4.90], [100, 3.90]], null, { nophoto: true });
 
 // ---------- estado ----------
-const Q = {}; const F = { name: '', cep: '', obs: '', note: '', notes: {} };
+const Q = {}; const F = { name: '', cpf: '', cep: '', rua: '', numero: '', bairro: '', cidade: '', uf: '', ref: '', obs: '', note: '', notes: {} };
 const STORE = 'sf3d_pedido_v1';
 const byKey = {}; L.forEach(l => l.items.forEach(i => { byKey[i.key] = { l, i }; Q[i.key] = 0; }));
 try { const s = JSON.parse(localStorage.getItem(STORE) || 'null'); if (s) { for (const k in s.q || {}) if (k in Q) Q[k] = Math.max(0, Math.min(999, s.q[k] | 0)); Object.assign(F, s.f || {}); if (!F.notes || typeof F.notes !== 'object') F.notes = {}; } } catch (e) {}
 const save = () => { try { localStorage.setItem(STORE, JSON.stringify({ q: Q, f: F })); } catch (e) {} };
 
+const CAMPOS = [['fName', 'name', 'Nome completo'], ['fCpf', 'cpf', 'CPF'], ['fCep', 'cep', 'CEP'], ['fRua', 'rua', 'Endereço'], ['fNumero', 'numero', 'Número'], ['fBairro', 'bairro', 'Bairro'], ['fCidade', 'cidade', 'Cidade'], ['fUf', 'uf', 'Estado'], ['fRef', 'ref', 'Ponto de referência']];
+function cpfOk(c) {
+  const d = (c || '').replace(/\D/g, '');
+  if (d.length !== 11 || /^(\d)\1+$/.test(d)) return false;
+  for (const n of [9, 10]) { let sum = 0; for (let i = 0; i < n; i++) sum += +d[i] * (n + 1 - i); const dv = (sum * 10) % 11 % 10; if (dv !== +d[n]) return false; }
+  return true;
+}
+function faltando() {
+  const out = [];
+  CAMPOS.forEach(([id, k, nome]) => {
+    const v = (F[k] || '').trim(); let bad = !v;
+    if (v && k === 'cpf') bad = !cpfOk(v);
+    if (v && k === 'cep') bad = v.replace(/\D/g, '').length !== 8;
+    if (v && k === 'name') bad = v.split(/\s+/).length < 2;
+    if (bad) out.push({ id, nome: k === 'cpf' && v ? 'CPF válido' : k === 'cep' && v ? 'CEP com 8 números' : k === 'name' && v ? 'Nome e sobrenome' : nome });
+  });
+  return out;
+}
 const brl = n => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const num = n => n.toFixed(2).replace('.', ',');
 const lineQty = l => l.items.reduce((a, i) => a + Q[i.key], 0);
@@ -437,7 +477,7 @@ $('#b-chaveiros').innerHTML = [chCom, chSem].map(l => `<article class="card" dat
   <div class="prog" data-prog="${l.id}" style="margin-top:8px"></div>${stepper(l.items[0].key, l.title, 'q')}</div></article>`).join('');
 $('#chavNote').value = F.note || '';
 $$('[data-vnote]').forEach(t => { t.value = F.notes[t.dataset.vnote] || ''; });
-['fName', 'fCep', 'fObs'].forEach(id => { $('#' + id).value = F[{ fName: 'name', fCep: 'cep', fObs: 'obs' }[id]] || ''; });
+[...CAMPOS.map(c => [c[0], c[1]]), ['fObs', 'obs']].forEach(([id, k]) => { $('#' + id).value = F[k] || ''; });
 
 // ---------- atualização ----------
 function progText(l, q) {
@@ -483,8 +523,12 @@ function orderGroups() {
 function buildMessage() {
   const g = orderGroups(), t = totals(), out = [];
   out.push('*Pedido · Studio Flex 3D (catálogo K-POP)*');
-  if (F.name.trim()) out.push('Cliente: ' + F.name.trim());
-  if (F.cep.trim()) out.push('CEP: ' + F.cep.trim());
+  out.push('*Dados do cliente*');
+  out.push('Nome: ' + F.name.trim());
+  out.push('CPF: ' + F.cpf.trim());
+  out.push(`Endereço: ${F.rua.trim()}, ${F.numero.trim()} · ${F.bairro.trim()}`);
+  out.push(`${F.cidade.trim()}/${F.uf} · CEP ${F.cep.trim()}`);
+  out.push('Referência: ' + F.ref.trim());
   out.push('');
   g.forEach(({ l, q, p, items }) => {
     out.push(`*${l.title}* · ${q} un × R$ ${num(p)} = R$ ${num(q * p)}`);
@@ -529,6 +573,7 @@ function renderCart() {
   const m = buildMessage(); $('#msg').value = m;
   const wa = $('#wa'); wa.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(m)}`;
   wa.setAttribute('aria-disabled', g.length ? 'false' : 'true');
+  wa.classList.toggle('incompleto', faltando().length > 0);
 }
 function toast(s) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = s; document.body.appendChild(d); setTimeout(() => d.remove(), 2200); }
 function openCart() { $('#shade').hidden = false; $('#drawer').hidden = false; renderCart(); $('#dClose').focus(); }
@@ -553,9 +598,30 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') { const lb =
 const syncMsg = () => { showFrete(totals().total); const m = buildMessage(); $('#msg').value = m; $('#wa').href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(m)}`; };
 $('#chavNote').addEventListener('input', e => { F.note = e.target.value; save(); });
 document.addEventListener('input', e => { const t = e.target; if (t.matches('[data-vnote]')) { F.notes[t.dataset.vnote] = t.value; save(); } });
-[['fName', 'name'], ['fCep', 'cep'], ['fObs', 'obs']].forEach(([id, k]) => $('#' + id).addEventListener('input', e => { F[k] = e.target.value; save(); syncMsg(); }));
+[...CAMPOS.map(([id, k]) => [id, k]), ['fObs', 'obs']].forEach(([id, k]) => $('#' + id).addEventListener('input', e => {
+  if (k === 'cpf') { const d = e.target.value.replace(/\D/g, '').slice(0, 11); e.target.value = d.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2'); }
+  if (k === 'cep') { const d = e.target.value.replace(/\D/g, '').slice(0, 8); e.target.value = d.length > 5 ? d.slice(0, 5) + '-' + d.slice(5) : d; }
+  F[k] = e.target.value;
+  if (k === 'cep') { const f = freteInfo(F.cep); if (f && f.uf) { F.uf = f.uf; $('#fUf').value = f.uf; } }
+  save(); syncMsg(); if (tentou) mostrarFalta();
+}));
 $('#cbOpen').addEventListener('click', () => { if (totals().count) openCart(); else { toast('Toque no + dos produtos para começar'); document.getElementById('variados').scrollIntoView({ behavior: 'smooth' }); } });
 $('#dClose').addEventListener('click', closeCart); $('#shade').addEventListener('click', closeCart);
+let tentou = false;
+function mostrarFalta() {
+  const f = faltando(), box = $('#falta');
+  CAMPOS.forEach(([id]) => $('#' + id).classList.toggle('erro', f.some(x => x.id === id)));
+  box.hidden = !f.length;
+  box.textContent = f.length ? 'Para enviar o pedido, falta preencher: ' + f.map(x => x.nome).join(', ') + '.' : '';
+  return f;
+}
+function bloqueia(e) {
+  tentou = true; const f = mostrarFalta();
+  if (f.length) { e.preventDefault(); e.stopImmediatePropagation(); const el = $('#' + f[0].id); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.focus({ preventScroll: true }); return true; }
+  return false;
+}
+$('#wa').addEventListener('click', bloqueia, true);
+$('#copy').addEventListener('click', bloqueia, true);
 $('#copy').addEventListener('click', () => {
   const m = buildMessage(); const fb = () => { const t = $('#msg'); t.closest('details').open = true; t.focus(); t.select(); toast('Selecionei o texto. Copie e cole no WhatsApp'); };
   try { navigator.clipboard.writeText(m).then(() => toast('Pedido copiado'), fb); } catch (e) { fb(); }
